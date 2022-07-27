@@ -431,6 +431,9 @@ func (c *OpContext) Resolve(env *Environment, r Resolver) (*Vertex, *Bottom) {
 		return nil, err
 	}
 
+	if arc == nil {
+		return nil, nil
+	}
 	if arc.ChildErrors != nil && arc.ChildErrors.Code == StructuralCycleError {
 		return nil, arc.ChildErrors
 	}
@@ -846,8 +849,8 @@ func (c *OpContext) lookup(x *Vertex, pos token.Pos, l Feature, state VertexStat
 				l.Index(), len(x.Elems()))
 		} else {
 			if code != 0 && x.IsOptional(l) {
-				c.addErrf(code, pos,
-					"cannot reference optional field: %s", label)
+				// c.addErrf(code, pos,
+				// 	"cannot reference optional field: %s", label)
 			} else {
 				c.addErrf(code, pos, "undefined field: %s", label)
 			}
@@ -932,8 +935,8 @@ func (c *OpContext) node(orig Node, x Expr, scalar bool, state VertexStatus) *Ve
 	case nil:
 		switch orig.(type) {
 		case *ForClause:
-			c.addErrf(IncompleteError, pos(x),
-				"cannot range over %s (incomplete)", x)
+			// c.addErrf(IncompleteError, pos(x),
+			// 	"cannot range over %s (incomplete)", x)
 		default:
 			c.addErrf(IncompleteError, pos(x),
 				"%s undefined (%s is incomplete)", orig, x)
@@ -956,8 +959,8 @@ func (c *OpContext) node(orig Node, x Expr, scalar bool, state VertexStatus) *Ve
 		if kind := v.Kind(); kind&StructKind != 0 {
 			switch orig.(type) {
 			case *ForClause:
-				c.addErrf(IncompleteError, pos(x),
-					"cannot range over %s (incomplete type %s)", x, kind)
+				// c.addErrf(IncompleteError, pos(x),
+				// 	"cannot range over %s (incomplete type %s)", x, kind)
 			default:
 				c.addErrf(IncompleteError, pos(x),
 					"%s undefined as %s is incomplete (type %s)", orig, x, kind)
