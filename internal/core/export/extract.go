@@ -58,6 +58,15 @@ func extractDocs(v *adt.Vertex, a []adt.Conjunct) (docs []*ast.CommentGroup) {
 			if c := internal.FileComment(f); c != nil {
 				docs = append(docs, c)
 			}
+
+		default:
+			if f != nil {
+				for _, cg := range f.Comments() {
+					if !containsDoc(docs, cg) && cg.Doc {
+						docs = append(docs, cg)
+					}
+				}
+			}
 		}
 	}
 
