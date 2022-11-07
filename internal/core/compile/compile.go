@@ -728,11 +728,30 @@ func (c *compiler) elem(n ast.Expr) adt.Elem {
 	return nil
 }
 
+func (c *compiler) getComprehensionComment(x *ast.Comprehension) []*ast.CommentGroup {
+	comments := x.Comments()
+	// TODO: make x.Value an *ast.StructLit and this is redundant.
+	if y, ok := x.Value.(*ast.StructLit); !ok {
+		return comments
+	} else {
+		for _, elem := range y.Elts {
+			if compre, ok := elem.(*ast.Comprehension); ok {
+				comments = append(comments, c.getComprehensionComment(compre)...)
+			}
+			comment := elem.Comments()
+			comments = append(comments, comment...)
+		}
+	}
+	return comments
+}
+
 func (c *compiler) comprehension(x *ast.Comprehension) adt.Elem {
 	var a []adt.Yielder
+	comments := c.getComprehensionComment(x)
 	for _, v := range x.Clauses {
 		switch x := v.(type) {
 		case *ast.ForClause:
+			x.SetComments(comments)
 			var key adt.Feature
 			if x.Key != nil {
 				key = c.label(x.Key)
@@ -748,6 +767,7 @@ func (c *compiler) comprehension(x *ast.Comprehension) adt.Elem {
 			a = append(a, y)
 
 		case *ast.IfClause:
+			x.SetComments(comments)
 			y := &adt.IfClause{
 				Src:       x,
 				Condition: c.expr(x.Condition),
@@ -755,6 +775,7 @@ func (c *compiler) comprehension(x *ast.Comprehension) adt.Elem {
 			a = append(a, y)
 
 		case *ast.LetClause:
+			x.SetComments(comments)
 			y := &adt.LetClause{
 				Src:   x,
 				Label: c.label(x.Ident),
@@ -769,12 +790,6 @@ func (c *compiler) comprehension(x *ast.Comprehension) adt.Elem {
 			return c.errf(x,
 				"first comprehension clause must be 'if' or 'for'")
 		}
-	}
-
-	// TODO: make x.Value an *ast.StructLit and this is redundant.
-	if y, ok := x.Value.(*ast.StructLit); !ok {
-		return c.errf(x.Value,
-			"comprehension value must be struct, found %T", y)
 	}
 
 	y := c.expr(x.Value)
